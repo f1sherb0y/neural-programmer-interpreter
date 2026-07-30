@@ -1,0 +1,19 @@
+{
+  "torch": "2.13.0+cu130",
+  "device": "cuda",
+  "seed": 1,
+  "training_examples_per_length": 32,
+  "maximum_training_length": 20,
+  "boundary_feature": true,
+  "results": [
+    {
+      "length": 10000,
+      "examples": 2,
+      "correct": 2,
+      "accuracy": 1.0,
+      "average_model_steps": 155001.5,
+      "seconds": 122.99881029129028,
+      "first_failure": null
+    }
+  ]
+}

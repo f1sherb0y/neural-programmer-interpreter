@@ -1,0 +1,6 @@
+maximum_training_digits,training_examples,training_decision_accuracy,validation_decision_accuracy,strict_generalization_frontier_digits,first_failing_test_digits
+1,640,0.9750616607289668,0.9764232317423807,0,1
+2,640,0.9717023959646911,0.9707578253706755,0,1
+5,640,0.988617561476579,0.9874539594843462,0,1
+10,640,0.9955003569827486,0.9949382466086252,0,1
+20,640,1.0,1.0,10000,not observed

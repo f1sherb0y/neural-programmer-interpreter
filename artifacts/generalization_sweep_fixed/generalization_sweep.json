@@ -1,0 +1,602 @@
+{
+  "torch": "2.13.0+cu130",
+  "device": "cuda",
+  "seed": 1,
+  "training_maximums": [
+    1,
+    2,
+    5,
+    10,
+    20
+  ],
+  "evaluation_lengths": [
+    1,
+    2,
+    5,
+    10,
+    20,
+    50,
+    100,
+    500,
+    1000,
+    3000,
+    10000
+  ],
+  "total_training_examples_per_model": 640,
+  "training_examples_per_length": {
+    "1": 640,
+    "2": 320,
+    "5": 128,
+    "10": 64,
+    "20": 32
+  },
+  "evaluation_examples": {
+    "1_to_20_digits": 100,
+    "50_and_100_digits": 32,
+    "500_to_10000_digits": 2
+  },
+  "frontier_definition": "Largest tested length with 100% whole-sequence accuracy before the first tested length containing any failure. A value of 10000 is a lower bound, not a proven maximum.",
+  "boundary_feature": true,
+  "models": [
+    {
+      "maximum_training_digits": 1,
+      "training_examples": 640,
+      "training_examples_per_length": 640,
+      "training_invocations": 9124,
+      "training_decision_accuracy": 0.9750616607289668,
+      "validation_decision_accuracy": 0.9764232317423807,
+      "maximum_tested_generalization_digits": null,
+      "first_failing_test_digits": 1,
+      "checkpoint": "artifacts/generalization_sweep_fixed/train_max_1.pt",
+      "evaluations": [
+        {
+          "length": 1,
+          "examples": 100,
+          "correct": 45,
+          "accuracy": 0.45,
+          "average_model_steps": 20.77,
+          "seconds": 1.2230756282806396,
+          "first_failure": "wrong result: expected 16, got 11"
+        },
+        {
+          "length": 2,
+          "examples": 100,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 20.18,
+          "seconds": 1.0727214813232422,
+          "first_failure": "wrong result: expected 151, got 9"
+        },
+        {
+          "length": 5,
+          "examples": 100,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 21.26,
+          "seconds": 0.9713990688323975,
+          "first_failure": "wrong result: expected 109873, got 9"
+        },
+        {
+          "length": 10,
+          "examples": 100,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 21.88,
+          "seconds": 1.0739662647247314,
+          "first_failure": "wrong result: expected 9580968315, got 5"
+        },
+        {
+          "length": 20,
+          "examples": 100,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 21.51,
+          "seconds": 0.9909589290618896,
+          "first_failure": "wrong result: expected 158691058322189342968, got 11"
+        },
+        {
+          "length": 50,
+          "examples": 32,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 25.3125,
+          "seconds": 0.34673118591308594,
+          "first_failure": "wrong result: expected 45363330680438720120235602859668074720184051718972, got 9"
+        },
+        {
+          "length": 100,
+          "examples": 32,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 19.28125,
+          "seconds": 0.3101522922515869,
+          "first_failure": "wrong result: expected 76594739296091226163753928890405019120528893172741750863861094396147492796307846, got 6"
+        },
+        {
+          "length": 500,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 33.0,
+          "seconds": 0.029550552368164062,
+          "first_failure": "wrong result: expected 60735934607364004433871541889501917195405101907102887320817717417395735550463776, got 11"
+        },
+        {
+          "length": 1000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 12.0,
+          "seconds": 0.01509857177734375,
+          "first_failure": "wrong result: expected 63392272416624587824776070012696802218767064339290344051892722199606034587549591, got 8"
+        },
+        {
+          "length": 3000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 21.5,
+          "seconds": 0.027788639068603516,
+          "first_failure": "wrong result: expected 12482803293450003185358503394442414572133458860174661878552638587178205564856019, got 11"
+        },
+        {
+          "length": 10000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 15.5,
+          "seconds": 0.046059370040893555,
+          "first_failure": "wrong result: expected 14092042037350715105293259383260562140140292788080970111521487350436033533553008, got 8"
+        }
+      ]
+    },
+    {
+      "maximum_training_digits": 2,
+      "training_examples": 640,
+      "training_examples_per_length": 320,
+      "training_invocations": 12160,
+      "training_decision_accuracy": 0.9717023959646911,
+      "validation_decision_accuracy": 0.9707578253706755,
+      "maximum_tested_generalization_digits": null,
+      "first_failing_test_digits": 1,
+      "checkpoint": "artifacts/generalization_sweep_fixed/train_max_2.pt",
+      "evaluations": [
+        {
+          "length": 1,
+          "examples": 100,
+          "correct": 52,
+          "accuracy": 0.52,
+          "average_model_steps": 17.82,
+          "seconds": 0.745941162109375,
+          "first_failure": "wrong result: expected 10, got 9"
+        },
+        {
+          "length": 2,
+          "examples": 100,
+          "correct": 24,
+          "accuracy": 0.24,
+          "average_model_steps": 27.88,
+          "seconds": 1.116774082183838,
+          "first_failure": "wrong result: expected 72, got 68"
+        },
+        {
+          "length": 5,
+          "examples": 100,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 23.94,
+          "seconds": 0.9357736110687256,
+          "first_failure": "wrong result: expected 187442, got 9"
+        },
+        {
+          "length": 10,
+          "examples": 100,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 25.35,
+          "seconds": 1.0499458312988281,
+          "first_failure": "wrong result: expected 14134497383, got 79"
+        },
+        {
+          "length": 20,
+          "examples": 100,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 22.4,
+          "seconds": 0.9845752716064453,
+          "first_failure": "wrong result: expected 97144754010084597902, got 98"
+        },
+        {
+          "length": 50,
+          "examples": 32,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 25.125,
+          "seconds": 0.35559821128845215,
+          "first_failure": "wrong result: expected 64742588957884476854368087734044984598956335882226, got 6"
+        },
+        {
+          "length": 100,
+          "examples": 32,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 25.5,
+          "seconds": 0.3751702308654785,
+          "first_failure": "wrong result: expected 80583316853295846091159222382550691321995302906384382589858927577671827073841119, got 95"
+        },
+        {
+          "length": 500,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 24.0,
+          "seconds": 0.026690006256103516,
+          "first_failure": "wrong result: expected 60430333110759144277867357332534554608607428875808817311701369687081036802426651, got 63"
+        },
+        {
+          "length": 1000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 24.0,
+          "seconds": 0.022559165954589844,
+          "first_failure": "wrong result: expected 94257309771771674067407358788942428253696742107120736466394877388078097078436106, got 93"
+        },
+        {
+          "length": 3000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 24.0,
+          "seconds": 0.031226396560668945,
+          "first_failure": "wrong result: expected 14404111603786587130752426942056554983788605627021124974017064723060057181466247, got 99"
+        },
+        {
+          "length": 10000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 27.5,
+          "seconds": 0.05318784713745117,
+          "first_failure": "wrong result: expected 75358346252216865099559542145806389276464311365674951605013030624570643761740551, got 99"
+        }
+      ]
+    },
+    {
+      "maximum_training_digits": 5,
+      "training_examples": 640,
+      "training_examples_per_length": 128,
+      "training_invocations": 21002,
+      "training_decision_accuracy": 0.988617561476579,
+      "validation_decision_accuracy": 0.9874539594843462,
+      "maximum_tested_generalization_digits": null,
+      "first_failing_test_digits": 1,
+      "checkpoint": "artifacts/generalization_sweep_fixed/train_max_5.pt",
+      "evaluations": [
+        {
+          "length": 1,
+          "examples": 100,
+          "correct": 78,
+          "accuracy": 0.78,
+          "average_model_steps": 22.83,
+          "seconds": 1.0173413753509521,
+          "first_failure": "wrong result: expected 15, got 14"
+        },
+        {
+          "length": 2,
+          "examples": 100,
+          "correct": 66,
+          "accuracy": 0.66,
+          "average_model_steps": 35.62,
+          "seconds": 1.5842502117156982,
+          "first_failure": "wrong result: expected 94, got 93"
+        },
+        {
+          "length": 5,
+          "examples": 100,
+          "correct": 40,
+          "accuracy": 0.4,
+          "average_model_steps": 79.17,
+          "seconds": 3.678908586502075,
+          "first_failure": "wrong result: expected 68075, got 68055"
+        },
+        {
+          "length": 10,
+          "examples": 100,
+          "correct": 10,
+          "accuracy": 0.1,
+          "average_model_steps": 124.59,
+          "seconds": 5.781091213226318,
+          "first_failure": "wrong result: expected 10945312305, got 10943412305"
+        },
+        {
+          "length": 20,
+          "examples": 100,
+          "correct": 2,
+          "accuracy": 0.02,
+          "average_model_steps": 152.82,
+          "seconds": 9.627479553222656,
+          "first_failure": "ACT failed to return after one environment action"
+        },
+        {
+          "length": 50,
+          "examples": 32,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 121.9375,
+          "seconds": 5.193126916885376,
+          "first_failure": "ACT failed to return after one environment action"
+        },
+        {
+          "length": 100,
+          "examples": 32,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 48.53125,
+          "seconds": 7.157674312591553,
+          "first_failure": "ACT failed to return after one environment action"
+        },
+        {
+          "length": 500,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 0.0,
+          "seconds": 0.030497312545776367,
+          "first_failure": "ACT failed to return after one environment action"
+        },
+        {
+          "length": 1000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 0.0,
+          "seconds": 0.20334601402282715,
+          "first_failure": "ACT failed to return after one environment action"
+        },
+        {
+          "length": 3000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 0.0,
+          "seconds": 0.5820531845092773,
+          "first_failure": "ACT failed to return after one environment action"
+        },
+        {
+          "length": 10000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 0.0,
+          "seconds": 0.1455233097076416,
+          "first_failure": "ACT failed to return after one environment action"
+        }
+      ]
+    },
+    {
+      "maximum_training_digits": 10,
+      "training_examples": 640,
+      "training_examples_per_length": 64,
+      "training_invocations": 35617,
+      "training_decision_accuracy": 0.9955003569827486,
+      "validation_decision_accuracy": 0.9949382466086252,
+      "maximum_tested_generalization_digits": null,
+      "first_failing_test_digits": 1,
+      "checkpoint": "artifacts/generalization_sweep_fixed/train_max_10.pt",
+      "evaluations": [
+        {
+          "length": 1,
+          "examples": 100,
+          "correct": 98,
+          "accuracy": 0.98,
+          "average_model_steps": 22.45,
+          "seconds": 1.0323982238769531,
+          "first_failure": "wrong result: expected 16, got 15"
+        },
+        {
+          "length": 2,
+          "examples": 100,
+          "correct": 81,
+          "accuracy": 0.81,
+          "average_model_steps": 38.48,
+          "seconds": 1.7419822216033936,
+          "first_failure": "wrong result: expected 180, got 160"
+        },
+        {
+          "length": 5,
+          "examples": 100,
+          "correct": 66,
+          "accuracy": 0.66,
+          "average_model_steps": 85.57,
+          "seconds": 3.9831886291503906,
+          "first_failure": "wrong result: expected 108862, got 108852"
+        },
+        {
+          "length": 10,
+          "examples": 100,
+          "correct": 44,
+          "accuracy": 0.44,
+          "average_model_steps": 163.34,
+          "seconds": 7.098757266998291,
+          "first_failure": "wrong result: expected 5361139449, got 5351139449"
+        },
+        {
+          "length": 20,
+          "examples": 100,
+          "correct": 23,
+          "accuracy": 0.23,
+          "average_model_steps": 316.39,
+          "seconds": 13.617096424102783,
+          "first_failure": "wrong result: expected 168397779962465797371, got 158397679962455796371"
+        },
+        {
+          "length": 50,
+          "examples": 32,
+          "correct": 1,
+          "accuracy": 0.03125,
+          "average_model_steps": 783.5625,
+          "seconds": 10.385409593582153,
+          "first_failure": "wrong result: expected 127426975790736214323573651675501530300177434205903, got 126425975790736214323573551665501530300177434205903"
+        },
+        {
+          "length": 100,
+          "examples": 32,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 1548.59375,
+          "seconds": 21.482720851898193,
+          "first_failure": "wrong result: expected 72653023664180609836004828226524965867389703201302888899154364393101945528396972, got 72653023564180609835004628225524955656389703201302888899154364393101945526396972"
+        },
+        {
+          "length": 500,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 7800.5,
+          "seconds": 6.983953475952148,
+          "first_failure": "wrong result: expected 13931503168979632764431267256522665032268443782457082863788225694854077463095870, got 13931503156979632764431267256522565032266443782456082863788225694854077453095870"
+        },
+        {
+          "length": 1000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 15575.0,
+          "seconds": 14.179626941680908,
+          "first_failure": "wrong result: expected 12254579189726698918015054279548987846394094175489593888657672972892316691669804, got 12254579189726698918015054279548987845394094175489593888657672972892316591669804"
+        },
+        {
+          "length": 3000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 46855.0,
+          "seconds": 41.18921709060669,
+          "first_failure": "wrong result: expected 12501171790025676252935624714301695726612255652212837732613807078453213408206480, got 12501171790025576252935624714301695726612255552212836732613806078453213406205480"
+        },
+        {
+          "length": 10000,
+          "examples": 2,
+          "correct": 0,
+          "accuracy": 0.0,
+          "average_model_steps": 154743.5,
+          "seconds": 136.44017386436462,
+          "first_failure": "wrong result: expected 16343348005932104822900369785864196000668555520802596256160991620610683920199200, got 15343346005932104822900369765854196000668555520802596256160991620610683920199200"
+        }
+      ]
+    },
+    {
+      "maximum_training_digits": 20,
+      "training_examples": 640,
+      "training_examples_per_length": 32,
+      "training_invocations": 63837,
+      "training_decision_accuracy": 1.0,
+      "validation_decision_accuracy": 1.0,
+      "maximum_tested_generalization_digits": 10000,
+      "first_failing_test_digits": null,
+      "checkpoint": "artifacts/generalization_sweep_fixed/train_max_20.pt",
+      "evaluations": [
+        {
+          "length": 1,
+          "examples": 100,
+          "correct": 100,
+          "accuracy": 1.0,
+          "average_model_steps": 22.64,
+          "seconds": 0.931039571762085,
+          "first_failure": null
+        },
+        {
+          "length": 2,
+          "examples": 100,
+          "correct": 100,
+          "accuracy": 1.0,
+          "average_model_steps": 37.68,
+          "seconds": 1.5872750282287598,
+          "first_failure": null
+        },
+        {
+          "length": 5,
+          "examples": 100,
+          "correct": 100,
+          "accuracy": 1.0,
+          "average_model_steps": 84.83,
+          "seconds": 3.709773540496826,
+          "first_failure": null
+        },
+        {
+          "length": 10,
+          "examples": 100,
+          "correct": 100,
+          "accuracy": 1.0,
+          "average_model_steps": 162.59,
+          "seconds": 7.050021409988403,
+          "first_failure": null
+        },
+        {
+          "length": 20,
+          "examples": 100,
+          "correct": 100,
+          "accuracy": 1.0,
+          "average_model_steps": 318.98,
+          "seconds": 14.10239839553833,
+          "first_failure": null
+        },
+        {
+          "length": 50,
+          "examples": 32,
+          "correct": 32,
+          "accuracy": 1.0,
+          "average_model_steps": 780.71875,
+          "seconds": 10.922492027282715,
+          "first_failure": null
+        },
+        {
+          "length": 100,
+          "examples": 32,
+          "correct": 32,
+          "accuracy": 1.0,
+          "average_model_steps": 1551.125,
+          "seconds": 21.860470294952393,
+          "first_failure": null
+        },
+        {
+          "length": 500,
+          "examples": 2,
+          "correct": 2,
+          "accuracy": 1.0,
+          "average_model_steps": 7793.5,
+          "seconds": 6.512098550796509,
+          "first_failure": null
+        },
+        {
+          "length": 1000,
+          "examples": 2,
+          "correct": 2,
+          "accuracy": 1.0,
+          "average_model_steps": 15499.0,
+          "seconds": 13.638261079788208,
+          "first_failure": null
+        },
+        {
+          "length": 3000,
+          "examples": 2,
+          "correct": 2,
+          "accuracy": 1.0,
+          "average_model_steps": 46589.0,
+          "seconds": 40.82953453063965,
+          "first_failure": null
+        },
+        {
+          "length": 10000,
+          "examples": 2,
+          "correct": 2,
+          "accuracy": 1.0,
+          "average_model_steps": 154888.0,
+          "seconds": 134.8316559791565,
+          "first_failure": null
+        }
+      ]
+    }
+  ]
+}

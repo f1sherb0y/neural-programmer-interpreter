@@ -1,0 +1,11 @@
+name: neural-programmer-interpreter
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip>=24
+  - pip:
+      - matplotlib==3.10.9
+      - networkx==3.6.1
+      - numpy==2.5.1
+      - torch==2.13.0
