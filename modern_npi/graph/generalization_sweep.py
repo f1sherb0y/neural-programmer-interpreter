@@ -216,11 +216,16 @@ class CapacityEvaluator:
         for nodes in self.node_candidates:
             result = self.evaluate_candidate(model, nodes, device)
             candidates.append(result)
+            failure = (
+                f" first_failure={result.first_failure}"
+                if result.first_failure is not None
+                else ""
+            )
             print(
                 f"[gpu {device.index}] train_max={maximum_train_nodes} "
                 f"seed={seed} step={training_step} nodes={nodes}: "
                 f"{result.correct_distances}/{result.required_tests} "
-                f"seconds={result.seconds:.1f}",
+                f"seconds={result.seconds:.1f}{failure}",
                 flush=True,
             )
             if not result.passed:
@@ -640,7 +645,21 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument(
         "--checkpoint-steps",
         type=parse_int_list,
-        default=[1_000, 2_000, 4_000, 6_000, 8_000, 10_000, 12_000],
+        default=[
+            1_000,
+            2_000,
+            4_000,
+            6_000,
+            8_000,
+            10_000,
+            12_000,
+            16_000,
+            20_000,
+            30_000,
+            40_000,
+            50_000,
+            60_000,
+        ],
     )
     result.add_argument(
         "--generalization-nodes",
@@ -677,10 +696,24 @@ def main() -> None:
     if configuration_path.exists():
         previous_configuration = json.loads(configuration_path.read_text())
         if previous_configuration != configuration:
-            raise ValueError(
-                f"{configuration_path} describes a different sweep; use a new "
-                "--output directory to avoid mixing results"
+            changed = {
+                key
+                for key in set(previous_configuration) | set(configuration)
+                if previous_configuration.get(key) != configuration.get(key)
+            }
+            extends_checkpoints = (
+                changed == {"checkpoint_steps"}
+                and set(previous_configuration["checkpoint_steps"]).issubset(
+                    configuration["checkpoint_steps"]
+                )
             )
+            if extends_checkpoints:
+                atomic_json_write(configuration, configuration_path)
+            else:
+                raise ValueError(
+                    f"{configuration_path} describes a different sweep; use a new "
+                    "--output directory to avoid mixing results"
+                )
     else:
         atomic_json_write(configuration, configuration_path)
 

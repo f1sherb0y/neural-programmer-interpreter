@@ -177,7 +177,7 @@ uv run python -m modern_npi.graph.generalization_sweep \
   --gpu-count 8 \
   --maximum-train-nodes 5,10,15,20 \
   --seeds 1,2 \
-  --checkpoint-steps 1000,2000,4000,6000,8000,10000,12000 \
+  --checkpoint-steps 1000,2000,4000,6000,8000,10000,12000,16000,20000,30000,40000,50000,60000 \
   --generalization-nodes 10,20,30,40,50,75,100,125,150,200 \
   --execution-batch-size 100 \
   --output artifacts/graph_generalization_sweep

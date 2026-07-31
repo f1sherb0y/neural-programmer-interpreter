@@ -64,7 +64,12 @@ class DijkstraExecutor:
             self.model_steps += 1
             if self.model_steps > self.step_limit:
                 raise ExecutionFailure(f"Execution exceeded {self.step_limit} model steps")
-            feature = encode_feature(self.environment.observe(), arguments)
+            try:
+                feature = encode_feature(self.environment.observe(), arguments)
+            except (ValueError, IndexError) as error:
+                raise ExecutionFailure(
+                    f"step {self.model_steps}, invalid observation: {error}"
+                ) from error
             feature_tensor = torch.from_numpy(feature).unsqueeze(0).to(self.device)
             program_tensor = torch.tensor([int(program)], device=self.device)
             end_logits, program_logits, argument_logits, states = self.model.inference_step(
@@ -179,16 +184,29 @@ def execute_dijkstra_batch(
         if not ready:
             continue
 
-        frames = [executions[index].stack[-1] for index in ready]
-        features = np.stack(
-            [
-                encode_feature(
-                    executions[index].environment.observe(),
-                    frame.arguments,
+        observable = []
+        encoded_features = []
+        for index in ready:
+            execution = executions[index]
+            frame = execution.stack[-1]
+            try:
+                encoded_features.append(
+                    encode_feature(
+                        execution.environment.observe(),
+                        frame.arguments,
+                    )
                 )
-                for index, frame in zip(ready, frames, strict=True)
-            ]
-        )
+                observable.append(index)
+            except (ValueError, IndexError) as error:
+                execution.failure = (
+                    f"step {execution.model_steps}, invalid observation: {error}"
+                )
+        ready = observable
+        if not ready:
+            continue
+
+        frames = [executions[index].stack[-1] for index in ready]
+        features = np.stack(encoded_features)
         feature_tensor = torch.from_numpy(features).to(device, non_blocking=True)
         program_tensor = torch.tensor(
             [int(frame.program) for frame in frames],
