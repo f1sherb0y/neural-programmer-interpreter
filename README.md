@@ -2,7 +2,7 @@
 
 This repository contains a modern PyTorch reproduction of the addition experiments from Reed and de Freitas, [Neural Programmer-Interpreters](https://arxiv.org/abs/1511.06279).
 
-The original third-party TensorFlow 0.x implementation remains under `model/` and `tasks/` for reference. The supported implementation is under `modern_npi/` and uses Python 3.12, PyTorch 2.13, recursive program calls, and dynamic scratchpads.
+The original third-party TensorFlow 0.x implementation remains under `model/` and `tasks/` for reference. The supported implementation is under `modern_npi/` and uses Python 3.12, PyTorch 2.11, recursive program calls, and dynamic scratchpads.
 
 ## Reproduced Results
 
@@ -78,7 +78,7 @@ The authors did not publish the experiment source, and the paper does not specif
 
 Other disclosed differences:
 
-- PyTorch 2.13 replaces the paper's historical framework.
+- PyTorch 2.11 replaces the paper's historical framework.
 - Adam uses a `3e-4` learning rate instead of the paper's `1e-4`.
 - Episodes are batched by invocation length instead of using the paper's adaptive curriculum.
 - Program, key, and state embedding dimensions are implementation choices because the paper does not fully specify them.
@@ -98,7 +98,15 @@ conda env create -f environment.yml
 conda activate neural-programmer-interpreter
 ```
 
-Python 3.12 is required. The locked PyTorch build uses CUDA when an NVIDIA GPU and compatible driver are available; ordinary training and evaluation commands also support `--device cpu`.
+Python 3.12 is required. On Linux and Windows, `uv.lock` selects the official PyTorch 2.11 CUDA 12.8 build so it works with NVIDIA drivers that support CUDA 12.8; ordinary training and evaluation commands also support `--device cpu`.
+
+Verify the server runtime before starting a long sweep:
+
+```bash
+uv run python -c 'import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())'
+```
+
+The expected GPU output includes `2.11.0+cu128`, `12.8`, and `True`.
 
 ## Reproduce
 
