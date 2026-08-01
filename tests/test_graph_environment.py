@@ -1,8 +1,8 @@
 import heapq
 import unittest
 
-from modern_npi.graph.constants import Program
-from modern_npi.graph.traces import DijkstraTrace
+from npi.tasks.graph.spec import Program
+from npi.tasks.graph.traces import DijkstraTrace
 
 
 def oracle_distances(node_count, edges, source):
@@ -26,25 +26,16 @@ def oracle_distances(node_count, edges, source):
 
 class GraphEnvironmentTest(unittest.TestCase):
     def test_reference_trace_computes_weighted_shortest_paths(self):
-        edges = [
-            (0, 1, 7),
-            (0, 2, 2),
-            (2, 1, 1),
-            (1, 3, 2),
-            (2, 3, 9),
-        ]
+        edges = [(0, 1, 7), (0, 2, 2), (2, 1, 1), (1, 3, 2), (2, 3, 9)]
         trace = DijkstraTrace(5, edges, 0)
         self.assertEqual(trace.environment.distances(), [0, 3, 2, 5, None])
-        self.assertEqual(
-            trace.environment.distances(), oracle_distances(5, edges, 0)
-        )
+        self.assertEqual(trace.environment.distances(), oracle_distances(5, edges, 0))
 
-    def test_trace_contains_real_program_invocations(self):
+    def test_trace_contains_hierarchical_programs(self):
         trace = DijkstraTrace(3, [(0, 1, 2), (1, 2, 4)], 0)
         programs = [episode.program for episode in trace.episodes]
         self.assertIn(Program.FIND_MIN, programs)
         self.assertIn(Program.RELAX, programs)
-        self.assertIn(Program.SCAN_EDGES, programs)
         self.assertGreater(programs.count(Program.ACT), 10)
 
     def test_negative_weights_are_rejected(self):

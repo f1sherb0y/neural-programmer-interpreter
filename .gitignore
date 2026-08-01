@@ -1,4 +1,4 @@
-# Python bytecode and caches
+# Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -9,7 +9,7 @@ __pycache__/
 .coverage.*
 htmlcov/
 
-# Virtual environments and local configuration
+# Environments and local configuration
 .venv/
 venv/
 env/
@@ -18,7 +18,7 @@ env/
 !.env.example
 .python-version.local
 
-# Build and packaging output
+# Build output
 build/
 dist/
 *.egg-info/
@@ -30,44 +30,31 @@ dist/
 .DS_Store
 *~
 
-# Training logs, scheduler output, and temporary files
+# Logs and scheduler output
 *.log
 *.out
 slurm-*.out
 wandb/
 runs/
-checkpoints/
 *.tmp
 
-# Model snapshots are generated unless explicitly curated below.
-*.pt
-*.pth
-*.ckpt
-*.ckpt.*
+# Generated model state
+*.weights.h5
+*.index
+*.data-*-of-*
+checkpoint
+resume/
 
-# Experiment artifacts are local by default. Keep only compact reports and the
-# two primary reproducibility checkpoints in version control.
+# Experiment output is local by default. Keep only the primary reproducibility
+# artifacts and compact reports in version control.
 artifacts/**
-!artifacts/addition.pt
+!artifacts/addition.weights.h5
+!artifacts/addition.weights.json
 !artifacts/addition_results.json
-!artifacts/addition_10_digit_results.json
-!artifacts/addition_10000_digit_results.json
-!artifacts/generalization_sweep_fixed/
-artifacts/generalization_sweep_fixed/**
-!artifacts/generalization_sweep_fixed/generalization_sweep.json
-!artifacts/generalization_sweep_fixed/train_vs_generalization.csv
-!artifacts/generalization_sweep_fixed/train_vs_generalization.pdf
-!artifacts/generalization_sweep_fixed/train_vs_generalization.png
-!artifacts/training_curve_20/
-artifacts/training_curve_20/**
-!artifacts/training_curve_20/training_curve.csv
-!artifacts/training_curve_20/training_curve.json
-!artifacts/training_curve_20/training_curve.pdf
-!artifacts/training_curve_20/training_curve.png
 !artifacts/graph_dijkstra/
 artifacts/graph_dijkstra/**
-!artifacts/graph_dijkstra/best.pt
+!artifacts/graph_dijkstra/best.weights.h5
+!artifacts/graph_dijkstra/best.weights.json
 !artifacts/graph_dijkstra/evaluation.json
-!artifacts/graph_dijkstra/results.pdf
-!artifacts/graph_dijkstra/results.png
-!artifacts/graph_dijkstra/training_history.json
+!artifacts/tensorflow_xla_results.png
+!artifacts/tensorflow_xla_results.pdf

@@ -1,7 +1,6 @@
-"""Modern command-line entry point for the addition reproduction."""
+"""Unified TensorFlow/XLA NPI command-line entry point."""
 
-from modern_npi.experiment import main
-
+from npi.cli import main
 
 if __name__ == "__main__":
     main()

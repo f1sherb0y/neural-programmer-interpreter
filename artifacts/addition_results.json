@@ -1,76 +1,35 @@
 {
-  "torch": "2.13.0+cu130",
-  "device": "cuda",
+  "framework": "tensorflow",
+  "tensorflow": "2.20.0",
+  "xla": true,
   "seed": 1,
-  "training_examples_per_length": 32,
   "maximum_training_length": 20,
-  "boundary_feature": true,
-  "training_invocations": 63837,
-  "training_decision_accuracy": 1.0,
-  "validation_invocations": 15991,
-  "validation_decision_accuracy": 1.0,
   "results": [
     {
       "length": 1,
-      "examples": 32,
-      "correct": 32,
+      "examples": 10,
+      "correct": 10,
       "accuracy": 1.0,
-      "average_model_steps": 22.6875,
-      "seconds": 0.22673988342285156,
-      "first_failure": null
-    },
-    {
-      "length": 5,
-      "examples": 32,
-      "correct": 32,
-      "accuracy": 1.0,
-      "average_model_steps": 83.5,
-      "seconds": 0.5134997367858887,
+      "average_model_steps": 23.4,
+      "seconds": 2.76759934425354,
       "first_failure": null
     },
     {
       "length": 10,
-      "examples": 32,
-      "correct": 32,
+      "examples": 10,
+      "correct": 10,
       "accuracy": 1.0,
-      "average_model_steps": 161.90625,
-      "seconds": 0.9501864910125732,
-      "first_failure": null
-    },
-    {
-      "length": 20,
-      "examples": 32,
-      "correct": 32,
-      "accuracy": 1.0,
-      "average_model_steps": 316.9375,
-      "seconds": 1.8144574165344238,
-      "first_failure": null
-    },
-    {
-      "length": 50,
-      "examples": 32,
-      "correct": 32,
-      "accuracy": 1.0,
-      "average_model_steps": 780.21875,
-      "seconds": 4.453567743301392,
+      "average_model_steps": 163.1,
+      "seconds": 4.1377551555633545,
       "first_failure": null
     },
     {
       "length": 100,
-      "examples": 32,
-      "correct": 32,
+      "examples": 10,
+      "correct": 10,
       "accuracy": 1.0,
-      "average_model_steps": 1550.9375,
-      "seconds": 9.766961574554443,
-      "first_failure": null
-    },
-    {
-      "length": 500,
-      "examples": 2,
-      "correct": 2,
-      "accuracy": 1.0,
-      "average_model_steps": 7804.0,
-      "seconds": 2.856454610824585,
+      "average_model_steps": 1551.6,
+      "seconds": 17.31850528717041,
       "first_failure": null
     },
     {
@@ -78,17 +37,8 @@
       "examples": 2,
       "correct": 2,
       "accuracy": 1.0,
-      "average_model_steps": 15594.5,
-      "seconds": 5.665850400924683,
-      "first_failure": null
-    },
-    {
-      "length": 3000,
-      "examples": 2,
-      "correct": 2,
-      "accuracy": 1.0,
-      "average_model_steps": 46339.0,
-      "seconds": 16.95822048187256,
+      "average_model_steps": 15484.0,
+      "seconds": 30.16268491744995,
       "first_failure": null
     }
   ]

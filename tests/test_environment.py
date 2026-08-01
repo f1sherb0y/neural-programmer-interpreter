@@ -1,8 +1,8 @@
 import unittest
 
-from modern_npi.constants import Program
-from modern_npi.environment import AdditionEnvironment, decimal_add
-from modern_npi.traces import AdditionTrace
+from npi.tasks.addition.environment import AdditionEnvironment, decimal_add
+from npi.tasks.addition.spec import Program
+from npi.tasks.addition.traces import AdditionTrace
 
 
 class AdditionEnvironmentTest(unittest.TestCase):
@@ -19,10 +19,9 @@ class AdditionEnvironmentTest(unittest.TestCase):
         self.assertEqual(len(trace.episodes[0].decisions), 6)
 
     def test_leading_zero_input_is_normalized(self):
-        trace = AdditionTrace("0009", "0001")
-        self.assertEqual(trace.environment.result(), "10")
+        self.assertEqual(AdditionTrace("0009", "0001").environment.result(), "10")
 
-    def test_decimal_add_is_not_limited_by_python_integer_conversion(self):
+    def test_decimal_add_handles_ten_thousand_digits(self):
         first = "9" * 10_000
         self.assertEqual(decimal_add(first, "1"), "1" + "0" * 10_000)
 
