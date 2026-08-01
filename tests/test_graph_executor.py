@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import tensorflow as tf
 
-from npi.core.runtime import execute_batch
+from npi.core.runtime import RuntimeProfile, execute_batch
 from npi.tasks.graph.codec import CODEC
 from npi.tasks.graph.environment import GraphEnvironment
 from npi.tasks.graph.spec import SPEC, Symbol
@@ -39,6 +39,7 @@ class GraphExecutorTest(unittest.TestCase):
                 raise ValueError("invalid pointer")
             return original(environment)
 
+        profile = RuntimeProfile()
         with patch.object(GraphEnvironment, "observe", new=observe):
             outcomes = execute_batch(
                 ImmediateReturnModel(),
@@ -47,10 +48,16 @@ class GraphExecutorTest(unittest.TestCase):
                 [bad, good],
                 [100, 100],
                 use_xla=False,
+                profile=profile,
             )
         self.assertIn("invalid observation", outcomes[0].failure)
         self.assertIsNone(outcomes[1].failure)
         self.assertIsNotNone(outcomes[1].result)
+        self.assertEqual(profile.loop_iterations, 1)
+        self.assertEqual(profile.observations, 1)
+        self.assertEqual(profile.model_rows, 1)
+        self.assertGreater(profile.inference_seconds, 0.0)
+        self.assertGreater(profile.total_seconds, profile.inference_seconds)
 
 
 if __name__ == "__main__":

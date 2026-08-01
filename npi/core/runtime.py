@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -23,6 +24,40 @@ class BatchOutcome:
     result: Any | None
     stats: ExecutionStats | None
     failure: str | None
+
+
+@dataclass
+class RuntimeProfile:
+    total_seconds: float = 0.0
+    scheduling_seconds: float = 0.0
+    observation_seconds: float = 0.0
+    tensor_assembly_seconds: float = 0.0
+    inference_seconds: float = 0.0
+    state_update_seconds: float = 0.0
+    control_seconds: float = 0.0
+    action_seconds: float = 0.0
+    result_seconds: float = 0.0
+    loop_iterations: int = 0
+    model_rows: int = 0
+    observations: int = 0
+    actions: int = 0
+
+    @property
+    def accounted_seconds(self) -> float:
+        return (
+            self.scheduling_seconds
+            + self.observation_seconds
+            + self.tensor_assembly_seconds
+            + self.inference_seconds
+            + self.state_update_seconds
+            + self.control_seconds
+            + self.action_seconds
+            + self.result_seconds
+        )
+
+    @property
+    def unaccounted_seconds(self) -> float:
+        return max(0.0, self.total_seconds - self.accounted_seconds)
 
 
 @dataclass
@@ -132,10 +167,13 @@ def execute_batch(
     *,
     use_xla: bool = True,
     maximum_depth: int = 16,
+    profile: RuntimeProfile | None = None,
 ) -> list[BatchOutcome]:
     """Advance heterogeneous recursive executions through shared TF calls."""
     if len(environments) != len(step_limits):
         raise ValueError("Every environment requires one step limit")
+    started = time.perf_counter()
+    profile = profile or RuntimeProfile()
     executions = [
         _Execution(
             environment,
@@ -149,15 +187,19 @@ def execute_batch(
     zero_states = tuple((hidden[0], memory[0]) for hidden, memory in zero_states)
 
     while True:
+        phase_started = time.perf_counter()
         active = [
             index
             for index, execution in enumerate(executions)
             if execution.stack and execution.failure is None
         ]
+        profile.scheduling_seconds += time.perf_counter() - phase_started
         if not active:
             break
+        profile.loop_iterations += 1
         ready = []
         features = []
+        phase_started = time.perf_counter()
         for index in active:
             execution = executions[index]
             execution.model_steps += 1
@@ -179,9 +221,12 @@ def execute_batch(
                 )
                 continue
             ready.append(index)
+        profile.observation_seconds += time.perf_counter() - phase_started
+        profile.observations += len(ready)
         if not ready:
             continue
 
+        phase_started = time.perf_counter()
         frames = [executions[index].stack[-1] for index in ready]
         layer_states = []
         for layer in range(model.config.layers):
@@ -205,31 +250,47 @@ def execute_batch(
                     ),
                 )
             )
-        outputs = step(
-            tf.convert_to_tensor(np.stack(features), tf.float32),
-            tf.convert_to_tensor([frame.program for frame in frames], tf.int32),
-            tuple(layer_states),
+        feature_tensor = tf.convert_to_tensor(np.stack(features), tf.float32)
+        program_tensor = tf.convert_to_tensor(
+            [frame.program for frame in frames], tf.int32
         )
+        profile.tensor_assembly_seconds += time.perf_counter() - phase_started
+
+        phase_started = time.perf_counter()
+        outputs = step(feature_tensor, program_tensor, tuple(layer_states))
         end_logits, program_logits, argument_logits, next_states = outputs
         ends = tf.argmax(end_logits, axis=-1).numpy()
         programs = tf.argmax(program_logits, axis=-1).numpy()
         arguments = [tf.argmax(logits, axis=-1).numpy() for logits in argument_logits]
+        profile.inference_seconds += time.perf_counter() - phase_started
+        profile.model_rows += len(ready)
 
+        phase_started = time.perf_counter()
+        action_seconds = 0.0
+        state_update_seconds = 0.0
+        action_count = 0
         for batch_index, execution_index in enumerate(ready):
             execution = executions[execution_index]
             frame = execution.stack[-1]
+            state_started = time.perf_counter()
             frame.states = tuple(
                 (hidden[batch_index], memory[batch_index])
                 for hidden, memory in next_states
             )
+            state_update_seconds += time.perf_counter() - state_started
             should_end = bool(ends[batch_index])
             if frame.program == spec.action_program:
                 if not should_end:
                     execution.failure = "Action program failed to return"
                     continue
                 try:
+                    action_started = time.perf_counter()
                     execution.environment.execute(frame.arguments)
+                    action_seconds += time.perf_counter() - action_started
+                    action_count += 1
                 except (ValueError, IndexError) as error:
+                    action_seconds += time.perf_counter() - action_started
+                    action_count += 1
                     execution.failure = (
                         f"Step {execution.model_steps}, invalid action "
                         f"{frame.arguments}: {error}"
@@ -247,7 +308,14 @@ def execute_batch(
             if execution.maximum_depth > maximum_depth:
                 execution.failure = f"Program call depth exceeded {maximum_depth}"
                 continue
+        profile.action_seconds += action_seconds
+        profile.state_update_seconds += state_update_seconds
+        profile.actions += action_count
+        profile.control_seconds += (
+            time.perf_counter() - phase_started - action_seconds - state_update_seconds
+        )
 
+    phase_started = time.perf_counter()
     outcomes = []
     for execution in executions:
         if execution.failure is not None:
@@ -260,4 +328,6 @@ def execute_batch(
                     None,
                 )
             )
+    profile.result_seconds += time.perf_counter() - phase_started
+    profile.total_seconds += time.perf_counter() - started
     return outcomes

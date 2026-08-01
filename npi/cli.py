@@ -1,7 +1,13 @@
 import argparse
 import sys
 
-TASKS = ("addition", "graph", "graph-sweep", "graph-weight-video")
+TASKS = (
+    "addition",
+    "graph",
+    "graph-ram",
+    "graph-sweep",
+    "graph-weight-video",
+)
 
 
 def root_parser():
@@ -24,6 +30,8 @@ def main():
         from npi.tasks.addition.experiment import main as task_main
     elif task == "graph":
         from npi.tasks.graph.experiment import main as task_main
+    elif task == "graph-ram":
+        from npi.tasks.graph_ram.experiment import main as task_main
     elif task == "graph-sweep":
         from npi.tasks.graph.sweep import main as task_main
     else:

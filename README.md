@@ -141,6 +141,23 @@ Closed-loop graph tests:     54/54
 
 The graph network predicts fixed register, field, and opcode symbols. It never predicts node IDs, edge IDs, distances, weights, or memory addresses.
 
+## Elementary-RAM Dijkstra
+
+The `graph-ram` task learns priority-queue Dijkstra using only eight generic register-machine actions:
+
+```text
+MOV LOAD STORE ADD SUB SHL1 SHR1 CMP
+```
+
+```bash
+uv run python main.py graph-ram \
+  --maximum-train-nodes 30 \
+  --training-examples-per-size 4 \
+  --steps 120000
+```
+
+Graph records, scratch storage, array addressing, priority entries, swaps, and parent/child calculations are ordinary words and learned instruction sequences. The environment contains no heap or minimum primitive. See [ram_dijkstra.md](docs/ram_dijkstra.md).
+
 ## Multi-GPU Sweep
 
 ```bash
