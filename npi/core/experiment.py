@@ -30,10 +30,6 @@ def set_seed(seed: int) -> None:
     tf.keras.utils.set_random_seed(seed)
 
 
-def current_learning_rate(trainer: Trainer) -> float:
-    return float(trainer.schedule(trainer.optimizer.iterations).numpy())
-
-
 def train_epochs(
     spec: TaskSpec,
     training_data: EpisodeDataset,
@@ -43,6 +39,7 @@ def train_epochs(
     epochs: int,
     batch_size: int,
     learning_rate: float,
+    weight_decay: float,
     seed: int,
     use_xla: bool = True,
     config: NPIConfig | None = None,
@@ -50,7 +47,12 @@ def train_epochs(
     set_seed(seed)
     model = NeuralProgrammerInterpreter(spec, config)
     model.build_for_task()
-    trainer = Trainer(model, learning_rate, use_xla=use_xla)
+    trainer = Trainer(
+        model,
+        learning_rate,
+        use_xla=use_xla,
+        weight_decay=weight_decay,
+    )
     history = []
     best_validation = -1.0
     started = time.time()
@@ -74,7 +76,7 @@ def train_epochs(
             correct / decisions,
             training_accuracy,
             validation_accuracy,
-            current_learning_rate(trainer),
+            trainer.learning_rate,
         )
         history.append(entry)
         print(
@@ -95,6 +97,9 @@ def train_epochs(
                     "seed": seed,
                     "training_invocations": training_data.size,
                     "training_decisions": training_data.decisions,
+                    "optimizer": "AdamW",
+                    "learning_rate": trainer.learning_rate,
+                    "weight_decay": trainer.weight_decay,
                     "history": [asdict(item) for item in history],
                 },
             )

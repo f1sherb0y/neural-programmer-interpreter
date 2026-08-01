@@ -1,5 +1,7 @@
 import unittest
 
+import tensorflow as tf
+
 from npi.core.model import NeuralProgrammerInterpreter, NPIConfig
 from npi.core.trainer import Trainer
 from npi.tasks.addition.data import make_dataset
@@ -18,8 +20,16 @@ class TrainingTest(unittest.TestCase):
         )
         model.build_for_task()
         before = [value.numpy().copy() for value in model.trainable_variables]
-        trainer = Trainer(model, use_xla=True)
+        trainer = Trainer(
+            model,
+            learning_rate=3e-4,
+            weight_decay=1e-4,
+            use_xla=True,
+        )
         metrics = trainer.train_batch(batch)
+        self.assertIsInstance(trainer.optimizer, tf.keras.optimizers.AdamW)
+        self.assertAlmostEqual(float(trainer.optimizer.learning_rate.numpy()), 3e-4)
+        self.assertAlmostEqual(float(trainer.optimizer.weight_decay), 1e-4)
         self.assertGreater(metrics.loss, 0)
         self.assertEqual(metrics.decisions, int(batch.sequence_mask.sum()))
         self.assertTrue(

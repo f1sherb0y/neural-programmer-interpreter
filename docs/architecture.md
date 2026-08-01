@@ -22,7 +22,7 @@ flowchart LR
 
 `Trainer.train_step` and `Trainer.eval_step` are `tf.function(jit_compile=True)` functions. Recursive model steps are also XLA compiled. Environment state transitions remain explicit task plugins because actions are discrete and are not differentiated.
 
-Power-of-two length buckets replace exact-length microbatches. A sequence mask excludes padding from return, program, argument, and exact-decision metrics.
+Power-of-two length buckets replace exact-length microbatches. A sequence mask excludes padding from return, program, argument, and exact-decision metrics. Optimization uses constant-rate AdamW; learning rate and decoupled weight decay are independent task-run parameters.
 
 ## Recursion
 

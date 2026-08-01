@@ -1,5 +1,8 @@
+import math
 import random
 from dataclasses import dataclass
+
+import networkx as nx
 
 
 @dataclass(frozen=True)
@@ -65,6 +68,23 @@ def generate_problem(
                 if (first, second) not in existing and rng.random() < probability:
                     _add_undirected(edges, first, second, rng, maximum_weight)
 
+    elif family == "random_connected":
+        probability = min(0.25, 2.0 * math.log(node_count) / node_count)
+        graph = None
+        for _ in range(1_000):
+            candidate = nx.fast_gnp_random_graph(
+                node_count,
+                probability,
+                seed=rng.randrange(2**32),
+            )
+            if nx.is_connected(candidate):
+                graph = candidate
+                break
+        if graph is None:
+            raise RuntimeError("Could not sample a connected Erdos-Renyi graph")
+        for first, second in graph.edges:
+            _add_undirected(edges, first, second, rng, maximum_weight)
+
     elif family == "directed":
         for index in range(node_count - 1):
             edges.append(
@@ -118,14 +138,13 @@ def generate_problems(
     maximum_weight: int = 9,
 ) -> list[GraphProblem]:
     rng = random.Random(seed)
-    families = ("path", "star", "sparse", "dense", "disconnected")
     return [
         generate_problem(
             node_count,
             rng,
-            families[example % len(families)],
+            "random_connected",
             maximum_weight,
         )
         for node_count in range(minimum_nodes, maximum_nodes + 1)
-        for example in range(examples_per_size)
+        for _ in range(examples_per_size)
     ]

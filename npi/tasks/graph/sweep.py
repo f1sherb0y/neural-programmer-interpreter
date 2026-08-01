@@ -193,9 +193,12 @@ class CapacityEvaluator:
                 flush=True,
             )
             if not result.passed:
-                failure_nodes = nodes
-                break
-            capacity = nodes
+                if failure_nodes is None:
+                    failure_nodes = nodes
+                if not self.args.continue_after_failure:
+                    break
+            elif failure_nodes is None:
+                capacity = nodes
         return CapacityResult(
             maximum_train_nodes,
             seed,
@@ -214,7 +217,12 @@ def train_checkpoints(maximum_train_nodes, seed, directory, args, gpu_id):
     )
     model = NeuralProgrammerInterpreter(SPEC)
     model.build_for_task()
-    trainer = Trainer(model, args.learning_rate, use_xla=not args.no_xla)
+    trainer = Trainer(
+        model,
+        args.learning_rate,
+        use_xla=not args.no_xla,
+        weight_decay=args.weight_decay,
+    )
     checkpoint = tf.train.Checkpoint(model=model, optimizer=trainer.optimizer)
     manager = tf.train.CheckpointManager(
         checkpoint, str(directory / "resume"), max_to_keep=1
@@ -283,6 +291,8 @@ def run_job(maximum_train_nodes, seed, args, gpu_id):
     model = NeuralProgrammerInterpreter(SPEC)
     model.build_for_task()
     for step, path in zip(args.checkpoint_steps, checkpoints, strict=True):
+        if step not in args.evaluation_steps:
+            continue
         output = evaluation_path(directory, step)
         if args.resume and output.exists():
             print(f"[gpu {gpu_id}] reused {output}", flush=True)
@@ -410,11 +420,22 @@ def parser():
         default=[1000, 2000, 4000, 8000, 12000, 20000, 30000, 40000, 50000, 60000],
     )
     result.add_argument(
+        "--evaluation-steps",
+        type=parse_int_list,
+        default=None,
+        help="checkpoint steps to evaluate; defaults to every checkpoint",
+    )
+    result.add_argument(
         "--generalization-nodes",
         type=parse_int_list,
         default=[10, 20, 30, 40, 50, 75, 100, 125, 150, 200],
     )
     result.add_argument("--tests-per-size", type=int, default=100)
+    result.add_argument(
+        "--continue-after-failure",
+        action="store_true",
+        help="evaluate every requested node count even after an earlier failure",
+    )
     result.add_argument("--families", type=parse_str_list, default=list(FAMILIES))
     result.add_argument("--evaluation-seed", type=int, default=48271)
     result.add_argument("--evaluation-maximum-weight", type=int, default=100)
@@ -422,6 +443,7 @@ def parser():
     result.add_argument("--batch-size", type=int, default=256)
     result.add_argument("--execution-batch-size", type=int, default=100)
     result.add_argument("--learning-rate", type=float, default=3e-4)
+    result.add_argument("--weight-decay", type=float, default=1e-4)
     result.add_argument("--gpu-count", type=int, default=1)
     result.add_argument("--no-xla", action="store_true")
     result.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
@@ -433,6 +455,12 @@ def main():
     args.maximum_train_nodes = sorted(set(args.maximum_train_nodes))
     args.seeds = sorted(set(args.seeds))
     args.checkpoint_steps = sorted(set(args.checkpoint_steps))
+    if args.evaluation_steps is None:
+        args.evaluation_steps = list(args.checkpoint_steps)
+    else:
+        args.evaluation_steps = sorted(set(args.evaluation_steps))
+    if not set(args.evaluation_steps).issubset(args.checkpoint_steps):
+        raise ValueError("Evaluation steps must also be checkpoint steps")
     args.generalization_nodes = sorted(set(args.generalization_nodes))
     if args.tests_per_size != 100:
         raise ValueError("The capacity criterion requires exactly 100 tests")

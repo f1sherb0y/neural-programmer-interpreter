@@ -19,7 +19,15 @@ from npi.tasks.graph.problems import generate_problem
 from npi.tasks.graph.spec import SPEC
 
 DEFAULT_OUTPUT = Path("artifacts/graph_dijkstra_tf")
-FAMILIES = ("path", "star", "sparse", "dense", "disconnected", "directed")
+FAMILIES = (
+    "path",
+    "star",
+    "sparse",
+    "dense",
+    "random_connected",
+    "disconnected",
+    "directed",
+)
 
 
 def oracle_distances(problem):
@@ -106,6 +114,7 @@ def parser():
     result.add_argument("--batch-size", type=int, default=256)
     result.add_argument("--execution-batch-size", type=int, default=100)
     result.add_argument("--learning-rate", type=float, default=3e-4)
+    result.add_argument("--weight-decay", type=float, default=1e-4)
     result.add_argument("--seed", type=int, default=1)
     result.add_argument("--device", default="auto")
     result.add_argument("--no-xla", action="store_true")
@@ -134,6 +143,7 @@ def main():
             epochs=args.epochs,
             batch_size=args.batch_size,
             learning_rate=args.learning_rate,
+            weight_decay=args.weight_decay,
             seed=args.seed,
             use_xla=use_xla,
         )

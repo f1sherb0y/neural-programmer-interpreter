@@ -6,41 +6,6 @@ from npi.core.data import EpisodeDataset, TrainingBatch
 from npi.core.model import NeuralProgrammerInterpreter
 
 
-class StableSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-    def __init__(
-        self,
-        learning_rate: float,
-        warmup_steps: int = 500,
-        decay_start: int = 8_000,
-        half_life: int = 5_000,
-        minimum_ratio: float = 1.0 / 300.0,
-    ):
-        super().__init__()
-        self.learning_rate = float(learning_rate)
-        self.warmup_steps = float(warmup_steps)
-        self.decay_start = float(decay_start)
-        self.half_life = float(half_life)
-        self.minimum_ratio = float(minimum_ratio)
-
-    def __call__(self, step):
-        step = tf.cast(step, tf.float32)
-        warmup = tf.maximum((step + 1.0) / self.warmup_steps, 1.0 / self.warmup_steps)
-        decay = tf.pow(0.5, tf.maximum(step - self.decay_start, 0.0) / self.half_life)
-        ratio = tf.where(
-            step < self.warmup_steps, warmup, tf.maximum(decay, self.minimum_ratio)
-        )
-        return tf.cast(self.learning_rate, tf.float32) * ratio
-
-    def get_config(self):
-        return {
-            "learning_rate": self.learning_rate,
-            "warmup_steps": self.warmup_steps,
-            "decay_start": self.decay_start,
-            "half_life": self.half_life,
-            "minimum_ratio": self.minimum_ratio,
-        }
-
-
 @dataclass(frozen=True)
 class StepMetrics:
     loss: float
@@ -103,11 +68,15 @@ class Trainer:
         learning_rate: float = 3e-4,
         *,
         use_xla: bool = True,
-        schedule: StableSchedule | None = None,
+        weight_decay: float = 1e-4,
     ):
         self.model = model
-        self.schedule = schedule or StableSchedule(learning_rate)
-        self.optimizer = tf.keras.optimizers.Adam(self.schedule)
+        self.learning_rate = float(learning_rate)
+        self.weight_decay = float(weight_decay)
+        self.optimizer = tf.keras.optimizers.AdamW(
+            learning_rate=self.learning_rate,
+            weight_decay=self.weight_decay,
+        )
         self.train_step = tf.function(
             self._train_step,
             jit_compile=use_xla,
