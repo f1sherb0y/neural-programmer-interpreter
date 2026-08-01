@@ -153,7 +153,9 @@ MOV LOAD STORE ADD SUB SHL1 SHR1 CMP
 uv run python main.py graph-ram \
   --maximum-train-nodes 30 \
   --training-examples-per-size 4 \
-  --steps 120000
+  --steps 500000 \
+  --weight-video artifacts/graph_ram_dijkstra/weight_evolution.mp4 \
+  --video-frame-interval 50
 ```
 
 Graph records, scratch storage, array addressing, priority entries, swaps, and parent/child calculations are ordinary words and learned instruction sequences. The environment contains no heap or minimum primitive. See [ram_dijkstra.md](docs/ram_dijkstra.md).

@@ -1,6 +1,7 @@
 import argparse
 import gc
 import json
+import math
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -14,6 +15,7 @@ from npi.core.runtime import execute_batch
 from npi.core.trainer import Trainer
 from npi.tasks.graph.experiment import oracle_distances, valid_parent_tree
 from npi.tasks.graph.problems import generate_problem
+from npi.tasks.graph.weight_video import WeightVideoWriter, parameter_metadata
 from npi.tasks.graph_ram.codec import CODEC
 from npi.tasks.graph_ram.data import make_dataset
 from npi.tasks.graph_ram.environment import RamGraphEnvironment
@@ -114,6 +116,11 @@ def parser():
     result.add_argument("--evaluation-examples", type=int, default=100)
     result.add_argument("--evaluation-maximum-weight", type=int, default=100)
     result.add_argument("--execution-batch-size", type=int, default=100)
+    result.add_argument("--weight-video", type=Path)
+    result.add_argument("--video-frame-interval", type=int, default=50)
+    result.add_argument("--video-frame-rate", type=int, default=30)
+    result.add_argument("--video-magnitude-maximum", type=float, default=4.0)
+    result.add_argument("--video-colormap", default="magma")
     result.add_argument("--cpu", action="store_true")
     result.add_argument("--no-xla", action="store_true")
     result.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)
@@ -122,6 +129,10 @@ def parser():
 
 def main():
     args = parser().parse_args()
+    if args.video_frame_interval < 1 or args.video_frame_rate < 1:
+        raise ValueError("Video frame interval and frame rate must be positive")
+    if args.video_magnitude_maximum <= 0:
+        raise ValueError("Video magnitude maximum must be positive")
     configure_tensorflow(device="cpu" if args.cpu else "auto")
     set_seed(args.seed)
     training, _ = make_dataset(
@@ -165,43 +176,102 @@ def main():
 
     args.output.mkdir(parents=True, exist_ok=True)
     started = time.time()
-    while step < args.steps:
-        for batch_index, batch in enumerate(
-            training.batches(args.batch_size, shuffle=True, seed=args.seed + epoch)
-        ):
-            if batch_index < next_batch:
-                continue
-            trainer.train_batch(batch)
-            step += 1
-            next_batch = batch_index + 1
-            if step % args.checkpoint_interval == 0 or step == args.steps:
-                path = args.output / "checkpoints" / f"step_{step:08d}.weights.h5"
-                path.parent.mkdir(parents=True, exist_ok=True)
-                model.save_weights(path)
-                manager.save(checkpoint_number=step)
-                write_json(
-                    state_path,
-                    {
-                        "optimizer_step": step,
-                        "epoch": epoch,
-                        "next_batch": next_batch,
-                    },
-                )
-                print(
-                    f"step={step} epoch={epoch} seconds={time.time() - started:.1f}",
-                    flush=True,
-                )
+    video_start_step = step
+    video_writer = None
+    if args.weight_video is not None:
+        if step % args.video_frame_interval or args.steps % args.video_frame_interval:
+            raise ValueError(
+                "Video start and end steps must be divisible by the frame interval"
+            )
+        parameter_count = sum(
+            math.prod(variable.shape) for variable in model.trainable_variables
+        )
+        video_writer = WeightVideoWriter(
+            args.weight_video,
+            parameter_count,
+            frame_rate=args.video_frame_rate,
+            magnitude_maximum=args.video_magnitude_maximum,
+            colormap=args.video_colormap,
+        )
+        video_writer.add(model)
+    try:
+        while step < args.steps:
+            for batch_index, batch in enumerate(
+                training.batches(args.batch_size, shuffle=True, seed=args.seed + epoch)
+            ):
+                if batch_index < next_batch:
+                    continue
+                trainer.train_batch(batch)
+                step += 1
+                next_batch = batch_index + 1
+                if video_writer is not None and step % args.video_frame_interval == 0:
+                    video_writer.add(model)
+                if step % args.checkpoint_interval == 0 or step == args.steps:
+                    path = args.output / "checkpoints" / f"step_{step:08d}.weights.h5"
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    model.save_weights(path)
+                    manager.save(checkpoint_number=step)
+                    write_json(
+                        state_path,
+                        {
+                            "optimizer_step": step,
+                            "epoch": epoch,
+                            "next_batch": next_batch,
+                        },
+                    )
+                    frames = (
+                        f" frames={video_writer.frame_count}"
+                        if video_writer is not None
+                        else ""
+                    )
+                    print(
+                        f"step={step} epoch={epoch}{frames} "
+                        f"seconds={time.time() - started:.1f}",
+                        flush=True,
+                    )
+                if step >= args.steps:
+                    break
             if step >= args.steps:
                 break
-        if step >= args.steps:
-            break
-        epoch += 1
-        next_batch = 0
+            epoch += 1
+            next_batch = 0
+    finally:
+        if video_writer is not None:
+            video_writer.close()
 
     training_accuracy = trainer.accuracy(training, args.batch_size)
     validation_accuracy = trainer.accuracy(validation, args.batch_size)
     final_path = args.output / "final.weights.h5"
     model.save_weights(final_path)
+    video_metadata = None
+    if video_writer is not None:
+        video_metadata = {
+            "file": str(args.weight_video),
+            "starting_optimizer_step": video_start_step,
+            "ending_optimizer_step": step,
+            "frame_interval_steps": args.video_frame_interval,
+            "step_for_frame": (
+                "starting_optimizer_step + frame_index * frame_interval_steps"
+            ),
+            "frame_rate": args.video_frame_rate,
+            "frame_count": video_writer.frame_count,
+            "duration_seconds": video_writer.frame_count / args.video_frame_rate,
+            "width": video_writer.width,
+            "height": video_writer.height,
+            "parameter_count": sum(
+                math.prod(variable.shape) for variable in model.trainable_variables
+            ),
+            "variables": parameter_metadata(model, video_writer.width),
+            "color": {
+                "value": "absolute parameter magnitude",
+                "colormap": args.video_colormap,
+                "normalization": ("log1p(abs(weight) / 1e-4) / log1p(maximum / 1e-4)"),
+                "maximum": args.video_magnitude_maximum,
+                "observed_maximum": video_writer.observed_maximum,
+                "clipped_values_across_all_frames": video_writer.clipped_values,
+            },
+        }
+        write_json(args.weight_video.with_suffix(".json"), video_metadata)
     metadata = {
         "framework": "tensorflow",
         "tensorflow": tf.__version__,
@@ -220,6 +290,7 @@ def main():
         "training_accuracy": training_accuracy,
         "validation_accuracy": validation_accuracy,
         "training_seconds": time.time() - started,
+        "weight_video": video_metadata,
     }
     write_json(args.output / "training.json", metadata)
     print(
