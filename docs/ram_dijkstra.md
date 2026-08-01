@@ -39,3 +39,26 @@ uv run python main.py graph-ram \
 ```
 
 The elementary ISA increases the number of neural decisions per algorithmic operation. It removes data-structure prior knowledge from actions, but has a larger constant factor than the higher-level graph pointer machine.
+
+## Regularization And Size
+
+Use explicit L2 loss regularization without L1 or weight decay:
+
+```bash
+uv run python main.py graph-ram \
+  --weight-decay 0 \
+  --l1-regularization 0 \
+  --l2-regularization 1e-11
+```
+
+Model capacity is controlled independently:
+
+```text
+--state-size
+--program-size
+--key-size
+--hidden-size
+--layers
+```
+
+Every checkpoint records these dimensions and the exact trainable parameter count. L1, L2, and decoupled weight decay are mutually exclusive trainer modes.

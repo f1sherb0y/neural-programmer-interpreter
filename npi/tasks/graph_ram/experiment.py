@@ -10,7 +10,7 @@ import tensorflow as tf
 
 from npi.core.experiment import set_seed
 from npi.core.hardware import configure_tensorflow
-from npi.core.model import NeuralProgrammerInterpreter
+from npi.core.model import NeuralProgrammerInterpreter, NPIConfig
 from npi.core.runtime import execute_batch
 from npi.core.trainer import Trainer
 from npi.tasks.graph.experiment import oracle_distances, valid_parent_tree
@@ -111,6 +111,12 @@ def parser():
     result.add_argument("--learning-rate", type=float, default=3e-4)
     result.add_argument("--weight-decay", type=float, default=0.0)
     result.add_argument("--l1-regularization", type=float, default=1e-10)
+    result.add_argument("--l2-regularization", type=float, default=0.0)
+    result.add_argument("--state-size", type=int, default=128)
+    result.add_argument("--program-size", type=int, default=64)
+    result.add_argument("--key-size", type=int, default=32)
+    result.add_argument("--hidden-size", type=int, default=256)
+    result.add_argument("--layers", type=int, default=2)
     result.add_argument("--seed", type=int, default=1)
     result.add_argument("--evaluation-nodes", type=int, default=30)
     result.add_argument("--evaluation-examples", type=int, default=100)
@@ -147,7 +153,14 @@ def main():
         args.validation_examples_per_size,
         args.seed + 1,
     )
-    model = NeuralProgrammerInterpreter(SPEC)
+    model_config = NPIConfig(
+        state_size=args.state_size,
+        program_size=args.program_size,
+        key_size=args.key_size,
+        hidden_size=args.hidden_size,
+        layers=args.layers,
+    )
+    model = NeuralProgrammerInterpreter(SPEC, model_config)
     model.build_for_task()
     trainer = Trainer(
         model,
@@ -155,6 +168,7 @@ def main():
         use_xla=not args.no_xla,
         weight_decay=args.weight_decay,
         l1_regularization=args.l1_regularization,
+        l2_regularization=args.l2_regularization,
     )
     checkpoint = tf.train.Checkpoint(model=model, optimizer=trainer.optimizer)
     manager = tf.train.CheckpointManager(
@@ -280,6 +294,11 @@ def main():
         "learning_rate": args.learning_rate,
         "weight_decay": args.weight_decay,
         "l1_regularization": args.l1_regularization,
+        "l2_regularization": args.l2_regularization,
+        "model_config": asdict(model_config),
+        "parameter_count": sum(
+            math.prod(variable.shape) for variable in model.trainable_variables
+        ),
         "maximum_train_nodes": args.maximum_train_nodes,
         "training_examples_per_size": args.training_examples_per_size,
         "training_invocations": training.size,

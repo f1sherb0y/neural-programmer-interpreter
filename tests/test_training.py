@@ -32,6 +32,7 @@ class TrainingTest(unittest.TestCase):
         self.assertAlmostEqual(float(trainer.optimizer.learning_rate.numpy()), 3e-4)
         self.assertEqual(trainer.weight_decay, 0.0)
         self.assertEqual(trainer.l1_regularization, 1e-8)
+        self.assertEqual(trainer.l2_regularization, 0.0)
         plain_trainer = Trainer(model, l1_regularization=0.0, use_xla=False)
         regularized_loss, _, _ = trainer._outputs_and_loss(to_tensors(batch), False)
         plain_loss, _, _ = plain_trainer._outputs_and_loss(to_tensors(batch), False)
@@ -41,6 +42,18 @@ class TrainingTest(unittest.TestCase):
         self.assertAlmostEqual(
             float(regularized_loss - plain_loss), expected_l1, places=6
         )
+        l2_trainer = Trainer(
+            model,
+            l1_regularization=0.0,
+            l2_regularization=1e-9,
+            use_xla=False,
+        )
+        l2_loss, _, _ = l2_trainer._outputs_and_loss(to_tensors(batch), False)
+        expected_l2 = 1e-9 * sum(
+            float(tf.reduce_sum(tf.square(value)))
+            for value in model.trainable_variables
+        )
+        self.assertAlmostEqual(float(l2_loss - plain_loss), expected_l2, places=6)
         self.assertGreater(metrics.loss, 0)
         self.assertEqual(metrics.decisions, int(batch.sequence_mask.sum()))
         self.assertTrue(
@@ -51,6 +64,8 @@ class TrainingTest(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             Trainer(model, weight_decay=1e-4, l1_regularization=1e-8)
+        with self.assertRaises(ValueError):
+            Trainer(model, l1_regularization=1e-8, l2_regularization=1e-9)
 
 
 if __name__ == "__main__":

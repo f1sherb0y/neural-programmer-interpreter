@@ -70,17 +70,22 @@ class Trainer:
         use_xla: bool = True,
         weight_decay: float = 0.0,
         l1_regularization: float = 1e-10,
+        l2_regularization: float = 0.0,
     ):
         self.model = model
         self.learning_rate = float(learning_rate)
         self.weight_decay = float(weight_decay)
         self.l1_regularization = float(l1_regularization)
-        if self.weight_decay < 0.0 or self.l1_regularization < 0.0:
+        self.l2_regularization = float(l2_regularization)
+        coefficients = (
+            self.weight_decay,
+            self.l1_regularization,
+            self.l2_regularization,
+        )
+        if any(value < 0.0 for value in coefficients):
             raise ValueError("Regularization coefficients cannot be negative")
-        if self.weight_decay and self.l1_regularization:
-            raise ValueError(
-                "Choose either weight decay or L1 regularization, not both"
-            )
+        if sum(bool(value) for value in coefficients) > 1:
+            raise ValueError("Choose only one regularization method")
         if self.weight_decay:
             self.optimizer = tf.keras.optimizers.AdamW(
                 learning_rate=self.learning_rate,
@@ -126,6 +131,14 @@ class Trainer:
                 ]
             )
             loss += tf.cast(self.l1_regularization, loss.dtype) * l1_norm
+        if self.l2_regularization:
+            squared_l2_norm = tf.add_n(
+                [
+                    tf.reduce_sum(tf.square(value))
+                    for value in self.model.trainable_variables
+                ]
+            )
+            loss += tf.cast(self.l2_regularization, loss.dtype) * squared_l2_norm
         correct, decisions = exact_decisions(
             end_logits,
             program_logits,

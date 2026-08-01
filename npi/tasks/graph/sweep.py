@@ -223,6 +223,7 @@ def train_checkpoints(maximum_train_nodes, seed, directory, args, gpu_id):
         use_xla=not args.no_xla,
         weight_decay=args.weight_decay,
         l1_regularization=args.l1_regularization,
+        l2_regularization=args.l2_regularization,
     )
     checkpoint = tf.train.Checkpoint(model=model, optimizer=trainer.optimizer)
     manager = tf.train.CheckpointManager(
@@ -446,6 +447,7 @@ def parser():
     result.add_argument("--learning-rate", type=float, default=3e-4)
     result.add_argument("--weight-decay", type=float, default=0.0)
     result.add_argument("--l1-regularization", type=float, default=1e-10)
+    result.add_argument("--l2-regularization", type=float, default=0.0)
     result.add_argument("--gpu-count", type=int, default=1)
     result.add_argument("--no-xla", action="store_true")
     result.add_argument("--resume", action=argparse.BooleanOptionalAction, default=True)

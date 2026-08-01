@@ -41,6 +41,7 @@ def train_epochs(
     learning_rate: float,
     weight_decay: float,
     l1_regularization: float,
+    l2_regularization: float,
     seed: int,
     use_xla: bool = True,
     config: NPIConfig | None = None,
@@ -54,6 +55,7 @@ def train_epochs(
         use_xla=use_xla,
         weight_decay=weight_decay,
         l1_regularization=l1_regularization,
+        l2_regularization=l2_regularization,
     )
     history = []
     best_validation = -1.0
@@ -103,6 +105,7 @@ def train_epochs(
                     "learning_rate": trainer.learning_rate,
                     "weight_decay": trainer.weight_decay,
                     "l1_regularization": trainer.l1_regularization,
+                    "l2_regularization": trainer.l2_regularization,
                     "history": [asdict(item) for item in history],
                 },
             )

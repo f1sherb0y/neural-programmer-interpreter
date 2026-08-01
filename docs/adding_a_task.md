@@ -75,6 +75,7 @@ model, history = train_epochs(
     learning_rate=3e-4,
     weight_decay=0.0,
     l1_regularization=1e-10,
+    l2_regularization=0.0,
     seed=1,
     use_xla=True,
 )

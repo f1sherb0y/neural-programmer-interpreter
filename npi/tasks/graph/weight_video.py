@@ -147,6 +147,7 @@ def parser():
     result.add_argument("--learning-rate", type=float, default=3e-4)
     result.add_argument("--weight-decay", type=float, default=0.0)
     result.add_argument("--l1-regularization", type=float, default=1e-10)
+    result.add_argument("--l2-regularization", type=float, default=0.0)
     result.add_argument("--magnitude-maximum", type=float, default=4.0)
     result.add_argument("--colormap", default="magma")
     result.add_argument("--seed", type=int, default=1)
@@ -180,6 +181,7 @@ def main():
         args.learning_rate,
         weight_decay=args.weight_decay,
         l1_regularization=args.l1_regularization,
+        l2_regularization=args.l2_regularization,
         use_xla=not args.no_xla,
     )
     parameter_count = sum(
@@ -244,6 +246,7 @@ def main():
         "learning_rate": args.learning_rate,
         "weight_decay": args.weight_decay,
         "l1_regularization": args.l1_regularization,
+        "l2_regularization": args.l2_regularization,
         "optimizer_steps": args.steps,
         "seed": args.seed,
         "xla": not args.no_xla,
