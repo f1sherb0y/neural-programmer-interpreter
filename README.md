@@ -23,7 +23,7 @@ default arguments
 return-before-call or return-after-call semantics
 ```
 
-This supports action spaces with different arities and vocabularies. Addition uses three argument heads; Dijkstra uses four. A custom task can choose any number of heads. Training uses constant-rate AdamW by default (`learning_rate=3e-4`, `weight_decay=1e-4`); there is no learning-rate schedule.
+This supports action spaces with different arities and vocabularies. Addition uses three argument heads; Dijkstra uses four. A custom task can choose any number of heads. Training uses constant-rate Adam with a small L1 loss penalty by default (`learning_rate=3e-4`, `l1_regularization=1e-10`); there is no learning-rate schedule or weight decay.
 
 ```text
 npi/
@@ -152,7 +152,8 @@ uv run python main.py graph-sweep \
   --generalization-nodes 10,20,30,40,50,75,100,125,150,200 \
   --execution-batch-size 100 \
   --learning-rate 3e-4 \
-  --weight-decay 1e-4
+  --weight-decay 0 \
+  --l1-regularization 1e-10
 ```
 
 Each `(maximum training nodes, seed)` run occupies one isolated TensorFlow GPU worker. Up to 100 recursive environments share each XLA model call. Every reported capacity requires 100/100 exact distance arrays and valid shortest-path parent trees. See [hpc_sweep.md](docs/hpc_sweep.md).
@@ -166,6 +167,8 @@ uv run python main.py graph-weight-video \
   --maximum-train-nodes 30 \
   --steps 120000 \
   --frame-interval 50 \
+  --weight-decay 0 \
+  --l1-regularization 1e-10 \
   --output artifacts/graph_random_weight_evolution.mp4
 ```
 

@@ -68,15 +68,28 @@ class Trainer:
         learning_rate: float = 3e-4,
         *,
         use_xla: bool = True,
-        weight_decay: float = 1e-4,
+        weight_decay: float = 0.0,
+        l1_regularization: float = 1e-10,
     ):
         self.model = model
         self.learning_rate = float(learning_rate)
         self.weight_decay = float(weight_decay)
-        self.optimizer = tf.keras.optimizers.AdamW(
-            learning_rate=self.learning_rate,
-            weight_decay=self.weight_decay,
-        )
+        self.l1_regularization = float(l1_regularization)
+        if self.weight_decay < 0.0 or self.l1_regularization < 0.0:
+            raise ValueError("Regularization coefficients cannot be negative")
+        if self.weight_decay and self.l1_regularization:
+            raise ValueError(
+                "Choose either weight decay or L1 regularization, not both"
+            )
+        if self.weight_decay:
+            self.optimizer = tf.keras.optimizers.AdamW(
+                learning_rate=self.learning_rate,
+                weight_decay=self.weight_decay,
+            )
+        else:
+            self.optimizer = tf.keras.optimizers.Adam(
+                learning_rate=self.learning_rate,
+            )
         self.train_step = tf.function(
             self._train_step,
             jit_compile=use_xla,
@@ -105,6 +118,14 @@ class Trainer:
         loss += masked_loss(program_logits, target_program, child_sequence_mask)
         for logits, targets in zip(argument_logits, target_arguments, strict=True):
             loss += masked_loss(logits, targets, child_sequence_mask)
+        if self.l1_regularization:
+            l1_norm = tf.add_n(
+                [
+                    tf.reduce_sum(tf.abs(value))
+                    for value in self.model.trainable_variables
+                ]
+            )
+            loss += tf.cast(self.l1_regularization, loss.dtype) * l1_norm
         correct, decisions = exact_decisions(
             end_logits,
             program_logits,

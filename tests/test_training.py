@@ -3,7 +3,7 @@ import unittest
 import tensorflow as tf
 
 from npi.core.model import NeuralProgrammerInterpreter, NPIConfig
-from npi.core.trainer import Trainer
+from npi.core.trainer import Trainer, to_tensors
 from npi.tasks.addition.data import make_dataset
 from npi.tasks.addition.spec import SPEC
 
@@ -23,13 +23,24 @@ class TrainingTest(unittest.TestCase):
         trainer = Trainer(
             model,
             learning_rate=3e-4,
-            weight_decay=1e-4,
+            weight_decay=0.0,
+            l1_regularization=1e-8,
             use_xla=True,
         )
         metrics = trainer.train_batch(batch)
-        self.assertIsInstance(trainer.optimizer, tf.keras.optimizers.AdamW)
+        self.assertIs(type(trainer.optimizer), tf.keras.optimizers.Adam)
         self.assertAlmostEqual(float(trainer.optimizer.learning_rate.numpy()), 3e-4)
-        self.assertAlmostEqual(float(trainer.optimizer.weight_decay), 1e-4)
+        self.assertEqual(trainer.weight_decay, 0.0)
+        self.assertEqual(trainer.l1_regularization, 1e-8)
+        plain_trainer = Trainer(model, l1_regularization=0.0, use_xla=False)
+        regularized_loss, _, _ = trainer._outputs_and_loss(to_tensors(batch), False)
+        plain_loss, _, _ = plain_trainer._outputs_and_loss(to_tensors(batch), False)
+        expected_l1 = 1e-8 * sum(
+            float(tf.reduce_sum(tf.abs(value))) for value in model.trainable_variables
+        )
+        self.assertAlmostEqual(
+            float(regularized_loss - plain_loss), expected_l1, places=6
+        )
         self.assertGreater(metrics.loss, 0)
         self.assertEqual(metrics.decisions, int(batch.sequence_mask.sum()))
         self.assertTrue(
@@ -38,6 +49,8 @@ class TrainingTest(unittest.TestCase):
                 for old, new in zip(before, model.trainable_variables, strict=True)
             )
         )
+        with self.assertRaises(ValueError):
+            Trainer(model, weight_decay=1e-4, l1_regularization=1e-8)
 
 
 if __name__ == "__main__":

@@ -73,7 +73,8 @@ model, history = train_epochs(
     epochs=100,
     batch_size=256,
     learning_rate=3e-4,
-    weight_decay=1e-4,
+    weight_decay=0.0,
+    l1_regularization=1e-10,
     seed=1,
     use_xla=True,
 )

@@ -40,6 +40,7 @@ def train_epochs(
     batch_size: int,
     learning_rate: float,
     weight_decay: float,
+    l1_regularization: float,
     seed: int,
     use_xla: bool = True,
     config: NPIConfig | None = None,
@@ -52,6 +53,7 @@ def train_epochs(
         learning_rate,
         use_xla=use_xla,
         weight_decay=weight_decay,
+        l1_regularization=l1_regularization,
     )
     history = []
     best_validation = -1.0
@@ -97,9 +99,10 @@ def train_epochs(
                     "seed": seed,
                     "training_invocations": training_data.size,
                     "training_decisions": training_data.decisions,
-                    "optimizer": "AdamW",
+                    "optimizer": type(trainer.optimizer).__name__,
                     "learning_rate": trainer.learning_rate,
                     "weight_decay": trainer.weight_decay,
+                    "l1_regularization": trainer.l1_regularization,
                     "history": [asdict(item) for item in history],
                 },
             )

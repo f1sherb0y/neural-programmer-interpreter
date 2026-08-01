@@ -145,12 +145,14 @@ def parser():
     result.add_argument("--frame-rate", type=int, default=30)
     result.add_argument("--batch-size", type=int, default=256)
     result.add_argument("--learning-rate", type=float, default=3e-4)
-    result.add_argument("--weight-decay", type=float, default=1e-4)
+    result.add_argument("--weight-decay", type=float, default=0.0)
+    result.add_argument("--l1-regularization", type=float, default=1e-10)
     result.add_argument("--magnitude-maximum", type=float, default=4.0)
     result.add_argument("--colormap", default="magma")
     result.add_argument("--seed", type=int, default=1)
     result.add_argument("--cpu", action="store_true")
     result.add_argument("--no-xla", action="store_true")
+    result.add_argument("--checkpoint", type=Path)
     result.add_argument("--reference-checkpoint", type=Path)
     return result
 
@@ -177,6 +179,7 @@ def main():
         model,
         args.learning_rate,
         weight_decay=args.weight_decay,
+        l1_regularization=args.l1_regularization,
         use_xla=not args.no_xla,
     )
     parameter_count = sum(
@@ -214,6 +217,10 @@ def main():
     finally:
         writer.close()
 
+    checkpoint_path = args.checkpoint or args.output.with_suffix(".weights.h5")
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    model.save_weights(checkpoint_path)
+
     reference_difference = None
     if args.reference_checkpoint is not None:
         reference = NeuralProgrammerInterpreter(SPEC)
@@ -233,9 +240,10 @@ def main():
         "training_distribution": "weighted connected Erdos-Renyi",
         "maximum_train_nodes": args.maximum_train_nodes,
         "training_examples_per_size": args.training_examples_per_size,
-        "optimizer": "AdamW",
+        "optimizer": type(trainer.optimizer).__name__,
         "learning_rate": args.learning_rate,
         "weight_decay": args.weight_decay,
+        "l1_regularization": args.l1_regularization,
         "optimizer_steps": args.steps,
         "seed": args.seed,
         "xla": not args.no_xla,
@@ -265,6 +273,7 @@ def main():
             "clipped_values_across_all_frames": writer.clipped_values,
         },
         "training_seconds": time.time() - started,
+        "checkpoint": str(checkpoint_path),
         "reference_checkpoint": (
             str(args.reference_checkpoint) if args.reference_checkpoint else None
         ),
@@ -274,6 +283,7 @@ def main():
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n")
     print(f"video={args.output}")
     print(f"metadata={metadata_path}")
+    print(f"checkpoint={checkpoint_path}")
 
 
 if __name__ == "__main__":
