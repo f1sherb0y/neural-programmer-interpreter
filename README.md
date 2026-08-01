@@ -157,6 +157,20 @@ uv run python main.py graph-sweep \
 
 Each `(maximum training nodes, seed)` run occupies one isolated TensorFlow GPU worker. Up to 100 recursive environments share each XLA model call. Every reported capacity requires 100/100 exact distance arrays and valid shortest-path parent trees. See [hpc_sweep.md](docs/hpc_sweep.md).
 
+## Weight Video
+
+Retrain while rendering one frame every 50 optimizer steps:
+
+```bash
+uv run python main.py graph-weight-video \
+  --maximum-train-nodes 30 \
+  --steps 120000 \
+  --frame-interval 50 \
+  --output artifacts/graph_random_weight_evolution.mp4
+```
+
+The raster has exactly one pixel per trainable parameter. Pixel locations remain fixed, and color represents absolute weight magnitude under one fixed logarithmic scale. A JSON sidecar records the frame-to-step mapping, color transform, and variable offsets.
+
 ## Artifacts
 
 ```text

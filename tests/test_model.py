@@ -6,9 +6,15 @@ import tensorflow as tf
 from npi.core.model import NeuralProgrammerInterpreter, NPIConfig
 from npi.core.spec import TaskSpec
 from npi.tasks.addition.spec import SPEC
+from npi.tasks.graph.weight_video import exact_raster_shape
 
 
 class ModelTest(unittest.TestCase):
+    def test_weight_video_raster_has_one_pixel_per_parameter(self):
+        width, height = exact_raster_shape(1_046_040)
+        self.assertEqual((width, height), (1137, 920))
+        self.assertEqual(width * height, 1_046_040)
+
     def test_sequence_and_recursive_step_paths_share_parameters(self):
         tf.keras.utils.set_random_seed(4)
         model = NeuralProgrammerInterpreter(SPEC, NPIConfig(hidden_size=32))
