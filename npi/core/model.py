@@ -36,10 +36,14 @@ class NeuralProgrammerInterpreter(tf.keras.Model):
         self.program_embeddings = tf.keras.layers.Embedding(
             spec.num_programs, config.program_size, name="program_embeddings"
         )
-        self.cells = [
-            tf.keras.layers.LSTMCell(config.hidden_size, name=f"lstm_cell_{index}")
-            for index in range(config.layers)
-        ]
+        cells = []
+        for index in range(config.layers):
+            cell = tf.keras.layers.LSTMCell(
+                config.hidden_size, name=f"lstm_cell_{index}"
+            )
+            setattr(self, f"lstm_cell_{index}", cell)
+            cells.append(cell)
+        self.cells = tuple(cells)
         self.recurrent_core = tf.keras.layers.RNN(
             tf.keras.layers.StackedRNNCells(self.cells),
             return_sequences=True,
@@ -47,10 +51,12 @@ class NeuralProgrammerInterpreter(tf.keras.Model):
         )
         self.end_head = tf.keras.layers.Dense(2, name="end_head")
         self.key_head = tf.keras.layers.Dense(config.key_size, name="key_head")
-        self.argument_heads = tuple(
-            tf.keras.layers.Dense(depth, name=f"argument_head_{index}")
-            for index, depth in enumerate(spec.argument_depths)
-        )
+        argument_heads = []
+        for index, depth in enumerate(spec.argument_depths):
+            head = tf.keras.layers.Dense(depth, name=f"argument_head_{index}")
+            setattr(self, f"argument_head_{index}", head)
+            argument_heads.append(head)
+        self.argument_heads = tuple(argument_heads)
         self._compiled_steps = {}
         self.program_keys = self.add_weight(
             name="program_keys",

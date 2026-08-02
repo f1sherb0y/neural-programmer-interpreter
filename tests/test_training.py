@@ -1,7 +1,14 @@
+import tempfile
 import unittest
+from pathlib import Path
 
+import numpy as np
 import tensorflow as tf
 
+from npi.core.checkpoint import (
+    create_training_checkpoint,
+    restore_training_checkpoint,
+)
 from npi.core.model import NeuralProgrammerInterpreter, NPIConfig
 from npi.core.trainer import Trainer, to_tensors
 from npi.tasks.addition.data import make_dataset
@@ -66,6 +73,73 @@ class TrainingTest(unittest.TestCase):
             Trainer(model, weight_decay=1e-4, l1_regularization=1e-8)
         with self.assertRaises(ValueError):
             Trainer(model, l1_regularization=1e-8, l2_regularization=1e-9)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            _, manager = create_training_checkpoint(
+                model, trainer.optimizer, directory / "resume"
+            )
+            checkpoint_path = manager.save(
+                checkpoint_number=int(trainer.optimizer.iterations.numpy())
+            )
+            checkpoint_names = [
+                name for name, _ in tf.train.list_variables(checkpoint_path)
+            ]
+            self.assertEqual(
+                sum(
+                    name.startswith("model/") and name.endswith("VARIABLE_VALUE")
+                    for name in checkpoint_names
+                ),
+                len(model.trainable_variables),
+            )
+            self.assertFalse(
+                any(
+                    name.startswith("optimizer/_trainable_variables")
+                    for name in checkpoint_names
+                )
+            )
+
+            restored_model = NeuralProgrammerInterpreter(
+                SPEC,
+                NPIConfig(
+                    state_size=16,
+                    program_size=8,
+                    key_size=8,
+                    hidden_size=16,
+                    layers=1,
+                ),
+            )
+            restored_model.build_for_task()
+            restored_trainer = Trainer(
+                restored_model,
+                learning_rate=3e-4,
+                weight_decay=0.0,
+                l1_regularization=1e-8,
+                use_xla=True,
+            )
+            restored_checkpoint, restored_manager = create_training_checkpoint(
+                restored_model,
+                restored_trainer.optimizer,
+                directory / "resume",
+            )
+            restore_training_checkpoint(
+                restored_trainer.optimizer,
+                restored_checkpoint,
+                restored_manager,
+                int(trainer.optimizer.iterations.numpy()),
+            )
+            for actual, restored in zip(
+                model.trainable_variables,
+                restored_model.trainable_variables,
+                strict=True,
+            ):
+                self.assertTrue(np.array_equal(actual.numpy(), restored.numpy()))
+            for actual, restored in zip(
+                trainer.optimizer.variables,
+                restored_trainer.optimizer.variables,
+                strict=True,
+            ):
+                self.assertTrue(np.array_equal(actual.numpy(), restored.numpy()))
 
 
 if __name__ == "__main__":

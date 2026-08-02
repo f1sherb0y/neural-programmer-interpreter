@@ -28,6 +28,8 @@ Power-of-two length buckets replace exact-length microbatches. A sequence mask e
 
 Every invocation starts with independent zero LSTM state. The caller's updated state remains stored while the child runs. `TaskSpec.return_before_call` declares whether a positive return decision terminates immediately or after the predicted child. This distinction is task-level data rather than executor-specific code.
 
+Training resume uses one TensorFlow object checkpoint containing the model, Adam slots, and iteration counter. Recurrent cells and argument heads are directly tracked model attributes, and optimizer slots are built before restoration. TensorFlow must report full checkpoint consumption and the optimizer iteration must equal the recorded step; resume fails rather than continuing from partial state if either check disagrees. H5 files are inference exports and are never read by resume logic.
+
 The batched runtime stores one explicit Python call stack per environment and stacks active TensorFlow states for a shared XLA call. Invalid actions or observations fail only their own execution.
 
 ## Task Boundaries

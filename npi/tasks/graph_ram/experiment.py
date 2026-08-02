@@ -8,6 +8,10 @@ from pathlib import Path
 
 import tensorflow as tf
 
+from npi.core.checkpoint import (
+    create_training_checkpoint,
+    restore_training_checkpoint,
+)
 from npi.core.experiment import set_seed
 from npi.core.hardware import configure_tensorflow
 from npi.core.model import NeuralProgrammerInterpreter, NPIConfig
@@ -173,21 +177,28 @@ def main():
         l1_regularization=args.l1_regularization,
         l2_regularization=args.l2_regularization,
     )
-    checkpoint = tf.train.Checkpoint(model=model, optimizer=trainer.optimizer)
-    manager = tf.train.CheckpointManager(
-        checkpoint, str(args.output / "resume"), max_to_keep=1
+    checkpoint, manager = create_training_checkpoint(
+        model,
+        trainer.optimizer,
+        args.output / "resume",
+        max_to_keep=1,
     )
     state_path = args.output / "resume.json"
     step = 0
     epoch = 1
     next_batch = 0
     if args.resume and manager.latest_checkpoint and state_path.exists():
-        checkpoint.restore(manager.latest_checkpoint).expect_partial()
         state = json.loads(state_path.read_text())
         step, epoch, next_batch = (
             state["optimizer_step"],
             state["epoch"],
             state["next_batch"],
+        )
+        restore_training_checkpoint(
+            trainer.optimizer,
+            checkpoint,
+            manager,
+            step,
         )
         print(f"resumed step={step} epoch={epoch} batch={next_batch}", flush=True)
 

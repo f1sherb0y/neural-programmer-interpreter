@@ -16,6 +16,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
+from npi.core.checkpoint import (
+    create_training_checkpoint,
+    restore_training_checkpoint,
+)
 from npi.core.experiment import set_seed
 from npi.core.hardware import configure_worker_gpu
 from npi.core.model import NeuralProgrammerInterpreter
@@ -225,20 +229,27 @@ def train_checkpoints(maximum_train_nodes, seed, directory, args, gpu_id):
         l1_regularization=args.l1_regularization,
         l2_regularization=args.l2_regularization,
     )
-    checkpoint = tf.train.Checkpoint(model=model, optimizer=trainer.optimizer)
-    manager = tf.train.CheckpointManager(
-        checkpoint, str(directory / "resume"), max_to_keep=1
+    checkpoint, manager = create_training_checkpoint(
+        model,
+        trainer.optimizer,
+        directory / "resume",
+        max_to_keep=1,
     )
     metadata_path = directory / "resume.json"
     optimizer_step = 0
     epoch = 1
     next_batch = 0
     if args.resume and manager.latest_checkpoint and metadata_path.exists():
-        checkpoint.restore(manager.latest_checkpoint).expect_partial()
         metadata = json.loads(metadata_path.read_text())
         optimizer_step = metadata["optimizer_step"]
         epoch = metadata["epoch"]
         next_batch = metadata["next_batch"]
+        restore_training_checkpoint(
+            trainer.optimizer,
+            checkpoint,
+            manager,
+            optimizer_step,
+        )
         print(
             f"[gpu {gpu_id}] resumed train_max={maximum_train_nodes} seed={seed} "
             f"at step={optimizer_step}",
