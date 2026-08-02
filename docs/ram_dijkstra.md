@@ -31,13 +31,17 @@ Train or resume the task with:
 
 ```bash
 uv run python main.py graph-ram \
-  --maximum-train-nodes 30 \
-  --training-examples-per-size 4 \
+  --maximum-train-nodes 100 \
+  --mean-train-nodes 30 \
+  --training-examples 396 \
+  --validation-examples 99 \
   --steps 500000 \
   --weight-video artifacts/graph_ram_dijkstra/weight_evolution.mp4 \
   --video-frame-interval 50 \
   --log-interval 1000
 ```
+
+Each training and validation graph independently samples its node count from 2 through 100. The bounded maximum-entropy distribution has expected size 30; deterministic balancing gives each finite dataset an empirical mean of exactly 30 while guaranteeing examples at both bounds. The sampled histogram is stored in `training.json`.
 
 The elementary ISA increases the number of neural decisions per algorithmic operation. It removes data-structure prior knowledge from actions, but has a larger constant factor than the higher-level graph pointer machine.
 

@@ -151,15 +151,17 @@ MOV LOAD STORE ADD SUB SHL1 SHR1 CMP
 
 ```bash
 uv run python main.py graph-ram \
-  --maximum-train-nodes 30 \
-  --training-examples-per-size 4 \
+  --maximum-train-nodes 100 \
+  --mean-train-nodes 30 \
+  --training-examples 396 \
+  --validation-examples 99 \
   --steps 500000 \
   --weight-video artifacts/graph_ram_dijkstra/weight_evolution.mp4 \
   --video-frame-interval 50 \
   --log-interval 1000
 ```
 
-Graph records, scratch storage, array addressing, priority entries, swaps, and parent/child calculations are ordinary words and learned instruction sequences. The environment contains no heap or minimum primitive. See [ram_dijkstra.md](docs/ram_dijkstra.md).
+Graph records, scratch storage, array addressing, priority entries, swaps, and parent/child calculations are ordinary words and learned instruction sequences. The environment contains no heap or minimum primitive. Training graph sizes are sampled independently from 2 through 100 using a bounded maximum-entropy distribution balanced to an empirical mean of exactly 30 nodes. See [ram_dijkstra.md](docs/ram_dijkstra.md).
 
 ## Multi-GPU Sweep
 

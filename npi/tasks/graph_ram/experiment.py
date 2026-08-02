@@ -21,7 +21,7 @@ from npi.tasks.graph.experiment import oracle_distances, valid_parent_tree
 from npi.tasks.graph.problems import generate_problem
 from npi.tasks.graph.weight_video import WeightVideoWriter, parameter_metadata
 from npi.tasks.graph_ram.codec import CODEC
-from npi.tasks.graph_ram.data import make_dataset
+from npi.tasks.graph_ram.data import make_sampled_dataset
 from npi.tasks.graph_ram.environment import RamGraphEnvironment
 from npi.tasks.graph_ram.spec import SPEC
 
@@ -106,9 +106,10 @@ def parser():
         description="Train elementary-RAM hierarchical Dijkstra"
     )
     result.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    result.add_argument("--maximum-train-nodes", type=int, default=30)
-    result.add_argument("--training-examples-per-size", type=int, default=4)
-    result.add_argument("--validation-examples-per-size", type=int, default=1)
+    result.add_argument("--maximum-train-nodes", type=int, default=100)
+    result.add_argument("--mean-train-nodes", type=float, default=30.0)
+    result.add_argument("--training-examples", type=int, default=396)
+    result.add_argument("--validation-examples", type=int, default=99)
     result.add_argument("--steps", type=int, default=120_000)
     result.add_argument("--checkpoint-interval", type=int, default=10_000)
     result.add_argument("--log-interval", type=int, default=1_000)
@@ -148,16 +149,18 @@ def main():
         raise ValueError("Video magnitude maximum must be positive")
     configure_tensorflow(device="cpu" if args.cpu else "auto")
     set_seed(args.seed)
-    training, _ = make_dataset(
+    training, training_problems = make_sampled_dataset(
         2,
         args.maximum_train_nodes,
-        args.training_examples_per_size,
+        args.mean_train_nodes,
+        args.training_examples,
         args.seed,
     )
-    validation, _ = make_dataset(
+    validation, validation_problems = make_sampled_dataset(
         2,
         args.maximum_train_nodes,
-        args.validation_examples_per_size,
+        args.mean_train_nodes,
+        args.validation_examples,
         args.seed + 1,
     )
     model_config = NPIConfig(
@@ -321,8 +324,32 @@ def main():
         "parameter_count": sum(
             math.prod(variable.shape) for variable in model.trainable_variables
         ),
+        "minimum_train_nodes": 2,
         "maximum_train_nodes": args.maximum_train_nodes,
-        "training_examples_per_size": args.training_examples_per_size,
+        "node_count_distribution": "balanced_bounded_maximum_entropy",
+        "requested_mean_train_nodes": args.mean_train_nodes,
+        "training_examples": args.training_examples,
+        "validation_examples": args.validation_examples,
+        "observed_training_mean_nodes": sum(
+            problem.node_count for problem in training_problems
+        )
+        / len(training_problems),
+        "observed_validation_mean_nodes": sum(
+            problem.node_count for problem in validation_problems
+        )
+        / len(validation_problems),
+        "training_node_count_histogram": {
+            str(nodes): sum(
+                problem.node_count == nodes for problem in training_problems
+            )
+            for nodes in range(2, args.maximum_train_nodes + 1)
+        },
+        "validation_node_count_histogram": {
+            str(nodes): sum(
+                problem.node_count == nodes for problem in validation_problems
+            )
+            for nodes in range(2, args.maximum_train_nodes + 1)
+        },
         "training_invocations": training.size,
         "training_decisions": training.decisions,
         "validation_invocations": validation.size,
