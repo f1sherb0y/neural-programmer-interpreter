@@ -107,6 +107,7 @@ def parser():
     result.add_argument("--validation-examples-per-size", type=int, default=1)
     result.add_argument("--steps", type=int, default=120_000)
     result.add_argument("--checkpoint-interval", type=int, default=10_000)
+    result.add_argument("--log-interval", type=int, default=1_000)
     result.add_argument("--batch-size", type=int, default=256)
     result.add_argument("--learning-rate", type=float, default=3e-4)
     result.add_argument("--weight-decay", type=float, default=0.0)
@@ -137,6 +138,8 @@ def main():
     args = parser().parse_args()
     if args.video_frame_interval < 1 or args.video_frame_rate < 1:
         raise ValueError("Video frame interval and frame rate must be positive")
+    if args.log_interval < 1 or args.checkpoint_interval < 1:
+        raise ValueError("Log and checkpoint intervals must be positive")
     if args.video_magnitude_maximum <= 0:
         raise ValueError("Video magnitude maximum must be positive")
     configure_tensorflow(device="cpu" if args.cpu else "auto")
@@ -208,6 +211,8 @@ def main():
             colormap=args.video_colormap,
         )
         video_writer.add(model)
+    interval_loss = 0.0
+    interval_batches = 0
     try:
         while step < args.steps:
             for batch_index, batch in enumerate(
@@ -215,9 +220,11 @@ def main():
             ):
                 if batch_index < next_batch:
                     continue
-                trainer.train_batch(batch)
+                metrics = trainer.train_batch(batch)
                 step += 1
                 next_batch = batch_index + 1
+                interval_loss += metrics.loss
+                interval_batches += 1
                 if video_writer is not None and step % args.video_frame_interval == 0:
                     video_writer.add(model)
                 if step % args.checkpoint_interval == 0 or step == args.steps:
@@ -233,16 +240,20 @@ def main():
                             "next_batch": next_batch,
                         },
                     )
+                if step % args.log_interval == 0 or step == args.steps:
                     frames = (
                         f" frames={video_writer.frame_count}"
                         if video_writer is not None
                         else ""
                     )
+                    mean_loss = interval_loss / max(interval_batches, 1)
                     print(
-                        f"step={step} epoch={epoch}{frames} "
+                        f"step={step} epoch={epoch} loss={mean_loss:.6f}{frames} "
                         f"seconds={time.time() - started:.1f}",
                         flush=True,
                     )
+                    interval_loss = 0.0
+                    interval_batches = 0
                 if step >= args.steps:
                     break
             if step >= args.steps:

@@ -155,7 +155,8 @@ uv run python main.py graph-ram \
   --training-examples-per-size 4 \
   --steps 500000 \
   --weight-video artifacts/graph_ram_dijkstra/weight_evolution.mp4 \
-  --video-frame-interval 50
+  --video-frame-interval 50 \
+  --log-interval 1000
 ```
 
 Graph records, scratch storage, array addressing, priority entries, swaps, and parent/child calculations are ordinary words and learned instruction sequences. The environment contains no heap or minimum primitive. See [ram_dijkstra.md](docs/ram_dijkstra.md).

@@ -35,7 +35,8 @@ uv run python main.py graph-ram \
   --training-examples-per-size 4 \
   --steps 500000 \
   --weight-video artifacts/graph_ram_dijkstra/weight_evolution.mp4 \
-  --video-frame-interval 50
+  --video-frame-interval 50 \
+  --log-interval 1000
 ```
 
 The elementary ISA increases the number of neural decisions per algorithmic operation. It removes data-structure prior knowledge from actions, but has a larger constant factor than the higher-level graph pointer machine.
